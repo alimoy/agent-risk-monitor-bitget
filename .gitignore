@@ -2,4 +2,6 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
-
+output/demo_assets/
+output/*_no_audio.mp4
+output/*.wav

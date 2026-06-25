@@ -79,6 +79,14 @@ output/sample_risk_report.html
 
 These files were generated from the sample input with the command in Quick Start.
 
+## Demo Video
+
+Chinese demo video:
+
+```text
+output/agent_risk_monitor_demo_cn.mp4
+```
+
 ## Example Result
 
 For the included sample trading record, the monitor reports:
