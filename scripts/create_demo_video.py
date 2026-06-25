@@ -8,8 +8,10 @@ import math
 import subprocess
 import textwrap
 import wave
+import asyncio
 from pathlib import Path
 
+import edge_tts
 import imageio.v2 as imageio
 import imageio_ffmpeg
 import numpy as np
@@ -22,6 +24,7 @@ ASSET_DIR = OUT_DIR / "demo_assets"
 VIDEO_NO_AUDIO = OUT_DIR / "agent_risk_monitor_demo_cn_no_audio.mp4"
 VIDEO_FINAL = OUT_DIR / "agent_risk_monitor_demo_cn.mp4"
 AUDIO_WAV = OUT_DIR / "agent_risk_monitor_demo_cn.wav"
+AUDIO_MP3 = OUT_DIR / "agent_risk_monitor_demo_cn_neural.mp3"
 
 WIDTH = 1280
 HEIGHT = 720
@@ -252,6 +255,40 @@ def draw_closing_slide(title: str, a: str, b: str) -> Image.Image:
 
 def create_audio() -> float | None:
     text = " ".join(part for _, *parts in NARRATION for part in parts)
+
+    async def create_neural_voice() -> None:
+        communicate = edge_tts.Communicate(
+            text,
+            voice="zh-CN-XiaoxiaoNeural",
+            rate="+2%",
+            volume="+0%",
+        )
+        await communicate.save(str(AUDIO_MP3))
+
+    try:
+        asyncio.run(create_neural_voice())
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        subprocess.run(
+            [
+                ffmpeg,
+                "-y",
+                "-i",
+                str(AUDIO_MP3),
+                "-ar",
+                "22050",
+                "-ac",
+                "1",
+                str(AUDIO_WAV),
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with wave.open(str(AUDIO_WAV), "rb") as handle:
+            return handle.getnframes() / handle.getframerate()
+    except Exception as exc:
+        print(f"Neural voice failed, falling back to Windows voice: {exc}")
+
     ps = f"""
 Add-Type -AssemblyName System.Speech
 $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
